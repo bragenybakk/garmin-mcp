@@ -1,0 +1,10 @@
+# Credentials and cached Garmin session - never commit these
+.env
+.garth/
+
+# Local files
+CLAUDE.md
+server.py.orig
+__pycache__/
+*.pyc
+.venv/
