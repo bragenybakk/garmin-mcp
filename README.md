@@ -30,29 +30,83 @@ Example questions I ask Claude:
 
 ## Setup
 
-Requires Python 3.10+.
+You need Python 3.10 or newer and the [Claude Desktop](https://claude.ai/download) app.
+
+### 1. Download and install
 
 ```bash
 git clone https://github.com/bragenybakk/garmin-mcp.git
 cd garmin-mcp
 pip install -r requirements.txt
-cp .env.example .env   # then fill in your Garmin email and password
 ```
 
-Add the server to Claude Desktop in `claude_desktop_config.json`:
+### 2. Add your Garmin login
+
+Make a copy of `.env.example` and name it `.env`. Open it and fill in the email and password you use for Garmin Connect:
+
+```
+GARMIN_EMAIL=you@example.com
+GARMIN_PASSWORD=your-password
+```
+
+The `.env` file stays on your computer and is never uploaded (it is listed in `.gitignore`).
+
+### 3. Find two paths
+
+You need the full path to Python and to `server.py`. Run these from inside the `garmin-mcp` folder:
+
+**Windows (PowerShell)**
+
+```powershell
+(Get-Command python).Source
+(Resolve-Path server.py).Path
+```
+
+**macOS / Linux**
+
+```bash
+which python3
+realpath server.py
+```
+
+Copy both paths somewhere, you need them in the next step.
+
+### 4. Connect it to Claude Desktop
+
+1. Open Claude Desktop and go to **Settings → Developer → Edit Config**. This opens a file called `claude_desktop_config.json`.
+2. Paste this into the file, and replace the two paths with the ones you found in step 3:
 
 ```json
 {
   "mcpServers": {
     "garmin": {
-      "command": "python",
-      "args": ["C:/path/to/garmin-mcp/server.py"]
+      "command": "C:\\Users\\you\\miniconda3\\python.exe",
+      "args": ["C:\\Users\\you\\garmin-mcp\\server.py"]
     }
   }
 }
 ```
 
-Restart Claude Desktop, and the Garmin tools show up in the chat.
+   On Windows, every `\` in a path has to be written as `\\` in this file. On macOS the paths look like `/Users/you/garmin-mcp/server.py` and can be pasted as they are.
+
+   If the file already has an `"mcpServers"` section, add the `"garmin": { ... }` block inside it instead of pasting a new one.
+
+3. Save the file and **quit Claude Desktop completely** (on Windows: right-click the Claude icon by the clock and choose Quit). Closing the window is not enough.
+4. Open Claude Desktop again. Ask *"How did I sleep last night?"* to check that it works.
+
+### Using Claude Code instead?
+
+One command does the same thing:
+
+```bash
+claude mcp add garmin -- python /full/path/to/garmin-mcp/server.py
+```
+
+### Troubleshooting
+
+- **The Garmin tools don't show up:** make sure Claude Desktop was fully quit and reopened, and check for typos in the paths.
+- **"GARMIN_EMAIL and GARMIN_PASSWORD must be set":** the `.env` file is missing or is still named `.env.example`.
+- **Login fails:** delete the `.garth` folder and try again. It will log in fresh with the password from `.env`.
 
 ## Ideas for later
 
