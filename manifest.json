@@ -1,0 +1,69 @@
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/mcpb/main/schemas/mcpb-manifest-v0.4.schema.json",
+  "manifest_version": "0.4",
+  "name": "garmin-mcp",
+  "display_name": "Garmin Connect",
+  "version": "0.2.0",
+  "description": "Read-only access to your own Garmin Connect data: sleep, HRV, recovery, activities, training load and performance.",
+  "long_description": "Talk to Claude about your training and recovery with your real Garmin data behind it.\n\n- **Recovery:** sleep, overnight HRV against your baseline, training readiness, resting heart rate, body battery and stress, in one call.\n- **Training:** recent activities, laps and heart rate zones, weekly load and intensity, training status and load balance, planned workouts.\n- **Performance:** VO2 max, race predictions, endurance and hill score, fitness age, lactate threshold and personal records.\n- **Trends:** day-by-day sleep, HRV, resting HR, readiness, body battery, stress, steps, intensity minutes, weight or VO2 max over up to 90 days.\n\nEverything is read-only. Your email and password are kept in your system keychain and are only used when there is no saved Garmin session. The session tokens are stored in `~/.garminconnect`. If your account uses two-step verification, Claude asks you for the code the first time.",
+  "author": {
+    "name": "Brage Nybakk",
+    "url": "https://github.com/bragenybakk"
+  },
+  "homepage": "https://github.com/bragenybakk/garmin-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bragenybakk/garmin-mcp.git"
+  },
+  "icon": "icon.png",
+  "keywords": ["garmin", "fitness", "training", "sleep", "hrv", "recovery", "running", "health"],
+  "server": {
+    "type": "uv",
+    "entry_point": "server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "--directory", "${__dirname}", "server.py"],
+      "env": {
+        "GARMIN_EMAIL": "${user_config.garmin_email}",
+        "GARMIN_PASSWORD": "${user_config.garmin_password}",
+        "GARMIN_TOKEN_DIR": "${HOME}/.garminconnect"
+      }
+    }
+  },
+  "user_config": {
+    "garmin_email": {
+      "type": "string",
+      "title": "Garmin email",
+      "description": "The email you sign in to Garmin Connect with.",
+      "required": true
+    },
+    "garmin_password": {
+      "type": "string",
+      "title": "Garmin password",
+      "description": "Stored in your system keychain. Only used when there is no saved session (usually about once a year).",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "tools": [
+    { "name": "get_recovery_snapshot", "description": "Sleep, HRV, training readiness, resting HR, body battery and stress for a day in one call." },
+    { "name": "get_sleep_data", "description": "Sleep for one night: stages, score and its factors, HRV, SpO2 and respiration." },
+    { "name": "get_sleep_last_n_days", "description": "Sleep for the last N nights with averages." },
+    { "name": "get_hrv", "description": "Overnight HRV with weekly average, status and personal baseline." },
+    { "name": "get_daily_summary", "description": "Steps, calories, intensity minutes, heart rate, stress and body battery for a day." },
+    { "name": "get_training_readiness", "description": "Training readiness score and the factors behind it." },
+    { "name": "get_training_status", "description": "Training status, acute vs chronic load and 4-week load balance." },
+    { "name": "get_recent_activities", "description": "Latest workouts with pace, heart rate zones, training load and effect." },
+    { "name": "get_activities_by_date", "description": "All workouts between two dates." },
+    { "name": "get_activity_details", "description": "Laps, heart rate zones, running dynamics and weather for one workout." },
+    { "name": "get_weekly_training_load", "description": "Volume, load, intensity minutes and sport mix per week." },
+    { "name": "get_planned_workouts", "description": "Scheduled workouts and active training plans." },
+    { "name": "get_performance_metrics", "description": "VO2 max, race predictions, endurance and hill score, fitness age, lactate threshold." },
+    { "name": "get_personal_records", "description": "Personal records and the activities they were set in." },
+    { "name": "get_wellness_trend", "description": "Day-by-day values of one metric over up to 90 days, with stats." },
+    { "name": "garmin_submit_mfa_code", "description": "Finish signing in with a Garmin verification code." }
+  ],
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"]
+  }
+}
