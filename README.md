@@ -8,15 +8,17 @@
   <a href="https://github.com/bragenybakk/garmin-mcp/releases/latest/download/garmin-mcp.mcpb"><img src="docs/download-button.svg" width="364" alt="Download for Claude Desktop"></a>
 </p>
 
-<p align="center">Open the downloaded file, and Claude Desktop installs it.<br>
-Then fill in your Garmin email and password, and ask: <em>"How did I sleep last night?"</em></p>
+<p align="center">Then open the downloaded file <strong>with Claude</strong> (right-click → Open with → Claude).<br>
+Fill in your Garmin email and password, and ask: <em>"How did I sleep last night?"</em></p>
 
 ## Install
 
 You need [Claude Desktop](https://claude.ai/download) and a Garmin Connect account.
 
 1. Click **Download** above.
-2. Open the downloaded file: click it in your browser's download list, or double-click it in your Downloads folder. Claude Desktop opens the installer.
+2. Open the downloaded file **with Claude**: right-click it in your Downloads folder and choose **Open with → Claude**. Claude Desktop opens the installer.
+   - If it opens in another program (for example a zip tool), that's the wrong one: use **Open with → Claude** instead.
+   - Or drag the file into Claude Desktop's **Settings → Extensions** page.
 3. Fill in the email and password you use for Garmin Connect, and install.
 4. Ask Claude: *"How did I sleep last night?"*
 
