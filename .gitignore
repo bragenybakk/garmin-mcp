@@ -8,3 +8,8 @@ server.py.orig
 __pycache__/
 *.pyc
 .venv/
+
+# Bundle build output
+build/
+dist/
+*.mcpb
