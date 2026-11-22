@@ -1,4 +1,4 @@
-"""Build dist/garmin-mcp-<version>.mcpb.
+"""Build dist/garmin-mcp.mcpb.
 
 Copies an allowlist of files into build/bundle (so .env, saved Garmin tokens and
 the local .venv can never end up in the bundle), validates the manifest and
@@ -50,7 +50,8 @@ def main() -> None:
     for name in BUNDLE_FILES:
         shutil.copy2(ROOT / name, staging / name)
 
-    out = ROOT / "dist" / f"{manifest['name']}-{version}.mcpb"
+    # A stable file name, so releases/latest/download/garmin-mcp.mcpb always works.
+    out = ROOT / "dist" / f"{manifest['name']}.mcpb"
     out.parent.mkdir(exist_ok=True)
     out.unlink(missing_ok=True)
 
