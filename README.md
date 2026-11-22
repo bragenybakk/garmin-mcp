@@ -1,17 +1,22 @@
 <p align="center"><img src="icon.png" width="96" alt=""></p>
 
-# Garmin MCP
+<h1 align="center">Garmin MCP</h1>
 
-Talk to Claude about your training, sleep and recovery, with your own Garmin Connect data behind it.
+<p align="center">Talk to Claude about your training, sleep and recovery, with your own Garmin data behind it.</p>
 
-I built it so I can ask Claude how I should plan the next weeks of training, whether I'm recovering well, and what separates the nights I sleep well from the ones I don't.
+<p align="center">
+  <a href="https://github.com/bragenybakk/garmin-mcp/releases/latest/download/garmin-mcp.mcpb"><img src="docs/download-button.svg" width="364" alt="Download for Claude Desktop"></a>
+</p>
+
+<p align="center">Open the downloaded file, and Claude Desktop installs it.<br>
+Then fill in your Garmin email and password, and ask: <em>"How did I sleep last night?"</em></p>
 
 ## Install
 
 You need [Claude Desktop](https://claude.ai/download) and a Garmin Connect account.
 
-1. **[Download garmin-mcp.mcpb](https://github.com/bragenybakk/garmin-mcp/releases/latest/download/garmin-mcp.mcpb)**
-2. Double-click the file (or right-click → **Open with → Claude**). Claude Desktop opens the installer.
+1. Click **Download** above.
+2. Open the downloaded file: click it in your browser's download list, or double-click it in your Downloads folder. Claude Desktop opens the installer.
 3. Fill in the email and password you use for Garmin Connect, and install.
 4. Ask Claude: *"How did I sleep last night?"*
 
@@ -22,6 +27,8 @@ That's all. There is nothing else to install: Claude Desktop sets up what it nee
 - **Privacy:** your password stays in your computer's keychain, and your data goes straight between your computer and Garmin.
 
 ## What you can ask
+
+I built it so I can ask Claude how to plan the next weeks of training, whether I'm recovering well, and what separates the nights I sleep well from the ones I don't. For example:
 
 - *"How has my sleep been the last two weeks, and does it drop after hard sessions?"*
 - *"Based on my last 10 runs, am I training too much at high intensity?"*
