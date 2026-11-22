@@ -9,7 +9,7 @@ primary_region = "arn"
   DATA_DIR = "/data"
   PORT = "8080"
   # PUBLIC_URL defaults to https://<app>.fly.dev. Secrets (fly secrets set):
-  # OWNER_PASSWORD (required), GARMIN_TOKENS_B64 (the Garmin session).
+  # ALLOWED_EMAILS (Garmin emails that may sign in, comma separated).
 
 [http_service]
   internal_port = 8080

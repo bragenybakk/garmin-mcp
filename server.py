@@ -88,7 +88,7 @@ just sent them and call garmin_submit_mfa_code with it.
 """
 
 if _remote_config:
-    _oauth = remote_auth.OwnerOAuthProvider(_remote_config)
+    _oauth = remote_auth.GarminOAuthProvider(_remote_config)
     mcp = MCPServer(
         name="Garmin",
         version=__version__,
@@ -114,8 +114,53 @@ MFA_MESSAGE = (
 )
 
 _lock = threading.RLock()
-_api: Garmin | None = None
+_api: Garmin | None = None  # stdio: the one local user
 _pending_mfa: tuple[Garmin, Any] | None = None
+_apis: dict[str, Garmin] = {}  # http: one signed-in client per person, keyed by OAuth subject
+
+if _remote_config:
+    # A fresh Garmin sign-in on the login page replaces any cached client for that person.
+    _oauth.on_new_session = lambda subject: _apis.pop(subject, None)
+
+
+def _current_subject() -> str:
+    """The person the request's OAuth token was issued to (remote mode)."""
+    from mcp.server.auth.middleware.auth_context import get_access_token
+
+    token = get_access_token()
+    if token is None or not token.subject:
+        raise ToolError("Not signed in. Connect the Garmin connector in Claude again.")
+    return token.subject
+
+
+def _remote_garmin() -> Garmin:
+    subject = _current_subject()
+    with _lock:
+        api = _apis.get(subject)
+        if api is None:
+            api = Garmin()
+            try:
+                api.login(_remote_config.token_dir(subject, legacy_dir=TOKEN_DIR))
+            except GarminConnectAuthenticationError as e:
+                raise ToolError(
+                    "Your Garmin session on this server is missing or has expired. In Claude, "
+                    "disconnect the Garmin connector and connect it again to sign in to Garmin."
+                ) from e
+            _apis[subject] = api
+        return api
+
+
+def _forget_session() -> None:
+    """Drop the cached client after Garmin rejected it, so the next call signs in again."""
+    global _api
+    with _lock:
+        if REMOTE:
+            try:
+                _apis.pop(_current_subject(), None)
+            except ToolError:
+                pass
+        else:
+            _api = None
 
 
 def _token_login() -> Garmin:
@@ -151,6 +196,8 @@ def _credential_login() -> Garmin:
 def _garmin() -> Garmin:
     """Return a signed-in client, signing in on first use."""
     global _api
+    if REMOTE:
+        return _remote_garmin()
     with _lock:
         if _api is not None:
             return _api
@@ -176,6 +223,11 @@ def garmin_submit_mfa_code(
     """Finish signing in to Garmin with the verification (MFA) code the user received.
     Only call this after another Garmin tool said a code is needed."""
     global _api, _pending_mfa
+    if REMOTE:
+        return (
+            "Not needed on this server: you sign in to Garmin, including any verification code, "
+            "on the login page that opens when you connect the connector in Claude."
+        )
     code = re.sub(r"\s", "", code)
     if not re.fullmatch(r"\d{4,10}", code):
         raise ToolError("The verification code should be 4-10 digits.")
@@ -367,12 +419,10 @@ def garmin_tool(title: str):
         def wrapper(*args, **kwargs):
             # ToolError messages reach the model; any other exception is reported
             # by the SDK as a bare "Error executing tool".
-            global _api
             try:
                 result = fn(*args, **kwargs)
             except GarminConnectAuthenticationError as e:
-                with _lock:
-                    _api = None  # sign in again on the next call
+                _forget_session()  # sign in again on the next call
                 raise ToolError(f"Garmin rejected the session ({e}). Try the request again.") from e
             except GarminConnectTooManyRequestsError as e:
                 raise ToolError("Garmin is rate limiting requests. Wait a few minutes and try again.") from e

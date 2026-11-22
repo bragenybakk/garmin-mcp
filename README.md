@@ -57,44 +57,52 @@ Claude Desktop installs Python and the dependencies itself the first time the ex
 
 **Upgrading from the old version?** Remove the `"garmin"` entry from `claude_desktop_config.json` (Settings → Developer → Edit Config) so you don't get the tools twice. The old `.garth` folder can be deleted; those tokens no longer work.
 
-## Run it remotely (claude.ai and the Claude phone apps)
+## Run it remotely (claude.ai, the phone apps, and friends)
 
-The bundle only works in Claude Desktop on the computer it is installed on. To use the same tools on claude.ai and in the phone apps, run the server on the internet and add it as a custom connector. The same `server.py` does this when started with `MCP_TRANSPORT=http`.
+The bundle only works in Claude Desktop on the computer it is installed on. To use the same tools on claude.ai and in the Claude phone apps, run the server on the internet and add it as a custom connector. The same `server.py` does this when started with `MCP_TRANSPORT=http`. One server can be shared by a few invited people, each with their own Garmin account.
 
-How the remote server is protected:
+### For the people you invite
 
-- It is an OAuth server for one person ([`remote_auth.py`](remote_auth.py)). When you connect, Claude sends you to a login page where you type a password only you know (`OWNER_PASSWORD`). Five wrong passwords lock the page for 15 minutes.
-- Only Claude's own redirect addresses (and `localhost`, for Claude Code) can register, so a look-alike site can't collect a login.
+1. In Claude (web or desktop): **Settings → Connectors → Add custom connector**, with the URL `https://<app-name>.fly.dev/mcp`.
+2. Click **Connect** and sign in with your own Garmin email and password, plus the code Garmin sends if it asks for one.
+3. That's it. The connector shows up in the Claude phone apps too, and everyone only sees their own Garmin data.
+
+### How it is protected
+
+- Only Garmin emails listed in `ALLOWED_EMAILS` can sign in. Anyone else is turned away before the server contacts Garmin, and taking an email off the list cuts off that person's access straight away.
+- The Garmin password is sent to Garmin once to sign in and is never stored. The server keeps each person's Garmin session in a folder of their own, and every Claude token is tied to the person it was issued to ([`remote_auth.py`](remote_auth.py)).
+- Three wrong passwords for an email lock it for 15 minutes.
+- Only Claude's own redirect addresses (and `localhost`, for Claude Code) can register, so a look-alike site can't collect a sign-in.
 - Access tokens last an hour and refresh tokens 90 days, both replaced on every refresh. Only hashes of them are stored.
-- The server has its **own Garmin session**, separate from the one Claude Desktop uses, so the two never refresh the same tokens and log each other out. The Garmin password never has to be on the server.
+- Whoever runs the server can technically reach the Garmin sessions stored on it. Only invite people who are fine with that.
 
 ### Deploy on Fly.io
 
 The included [`Dockerfile`](Dockerfile) and [`fly.toml`](fly.toml) run it in Stockholm on a small machine that stops when idle and starts on the next request (a few dollars a month at most). Change `app` in `fly.toml` to a name of your own first.
 
 1. Install [flyctl](https://fly.io/docs/flyctl/install/) and sign in with `fly auth login`.
-2. Create the app and the disk for the OAuth state and Garmin session:
+2. Create the app and the disk for the sign-in state and Garmin sessions:
    ```bash
    fly apps create <your-app-name>
    fly volumes create garmin_data --region arn --size 1
    ```
-3. Choose a long password for approving connections, and give the server its own Garmin session:
+3. List the Garmin emails that may sign in, separated by commas:
    ```bash
-   fly secrets set OWNER_PASSWORD="a-long-password-only-you-know" --stage
-   python scripts/garmin_login.py --fly-app <your-app-name>
-   ```
-   `garmin_login.py` signs in to Garmin once on your computer (asking for a verification code if needed), keeps that session in `~/.garminconnect-remote` and stores it on the app as the `GARMIN_TOKENS_B64` secret. It calls `flyctl` itself rather than piping, because Windows PowerShell 5.1 adds a byte-order mark to piped text and Fly then rejects the secret name.
-
-   In Windows PowerShell 5.1, this sets the password without showing it on screen or saving it in the history:
-   ```powershell
-   $s = Read-Host "Server password" -AsSecureString; $pw = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($s)); fly secrets set "OWNER_PASSWORD=$pw" --stage; Remove-Variable s, pw
+   fly secrets set ALLOWED_EMAILS="you@example.com,friend@example.com" --stage
    ```
 4. Deploy: `fly deploy --ha=false`
-5. In Claude (web or desktop): **Settings → Connectors → Add custom connector**, use `https://<your-app-name>.fly.dev/mcp`, click **Connect** and approve with your password. The connector then shows up in the phone apps too.
+5. Connect as described above.
 
-If the Garmin session ever expires, run `python scripts/garmin_login.py --fresh --fly-app <your-app-name>`; Fly restarts the server with the new secret and it picks up the new session.
+**Inviting or removing someone:** set `ALLOWED_EMAILS` again with the whole new list. Fly restarts the server with it. To also delete a removed person's Garmin session from the server:
 
-Run it locally in HTTP mode for testing with `MCP_TRANSPORT=http PUBLIC_URL=http://127.0.0.1:8080 OWNER_PASSWORD=... HOST=127.0.0.1 python server.py`.
+```bash
+python -c "import hashlib; print('u_' + hashlib.sha256(b'friend@example.com').hexdigest()[:20])"
+fly ssh console -C "rm -rf /data/users/<the id printed above>"
+```
+
+**Upgrading from the single-user version:** connections made before keep working. `OWNER_PASSWORD` is no longer used and can be removed with `fly secrets unset OWNER_PASSWORD`. `GARMIN_TOKENS_B64` and `scripts/garmin_login.py` only matter for those older connections.
+
+Run it locally in HTTP mode for testing with `MCP_TRANSPORT=http PUBLIC_URL=http://127.0.0.1:8080 ALLOWED_EMAILS=you@example.com HOST=127.0.0.1 python server.py`.
 
 ## Development
 
